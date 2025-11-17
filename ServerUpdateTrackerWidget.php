@@ -64,7 +64,7 @@ HTML;
         return $output;
     }
 
-    public function generateTable($data)
+public function generateTable($data)
 {
     // Styling for the table
     $output = '<style>
@@ -82,49 +82,50 @@ HTML;
         .server-update-tracker-table td {
             padding: 10px;
             border-bottom: 1px solid #ddd;
+            /* Added for word break */
+            word-break: break-word; 
         }
         .server-update-tracker-table tr:hover {
             background-color: #f1f1f1;
         }
-        .server-update-tracker-table td:first-child {
-            font-weight: bold;
-        }
-        .server-update-tracker-table .not-provided {
-            color: #999;
-            font-style: italic;
-        }
         .server-update-tracker-table .last-updated {
             color: #337ab7;
+            /* Prevent wrapping on date */
+            white-space: nowrap; 
         }
     </style>';
+
+    // Link to the main module page
+    $moduleLink = 'addonmodules.php?module=ServerUpdateTracker';
 
     // Table HTML
     $output .= '<table class="server-update-tracker-table">
         <thead>
             <tr>
                 <th>Server/Website</th>
-                <th>IP Address</th>
-                <th>Update Log</th>
+                <th>Update Snippet</th>
                 <th>Last Updated</th>
-                <th>Added By</th>
-                <th>Actions</th>
             </tr>
         </thead>
         <tbody>';
 
     if (empty($data)) {
-        $output .= '<tr><td colspan="6" style="text-align: center; font-style: italic; color: #999;">No updates available.</td></tr>';
+        $output .= '<tr><td colspan="3" style="text-align: center; font-style: italic; color: #999;">No updates available.</td></tr>';
     } else {
         foreach ($data as $update) {
+            // Create the log snippet
+            $logSnippet = htmlspecialchars($update->update_log);
+            // Remove all line breaks
+            $logSnippet = str_replace(["\r\n", "\r", "\n"], ' ', $logSnippet); 
+            // Truncate the string
+            if (strlen($logSnippet) > 75) {
+                $logSnippet = substr($logSnippet, 0, 75) . '...';
+            }
+
             $output .= '<tr>
-                <td>' . htmlspecialchars($update->server_name) . '</td>
-                <td>' . ($update->ip_address ? htmlspecialchars($update->ip_address) : '<span class="not-provided">Not Provided</span>') . '</td>
-                <td>' . nl2br(htmlspecialchars($update->update_log)) . '</td>
+                <td><a href="' . $moduleLink . '">' . htmlspecialchars($update->server_name) . '</a></td>
+                <td>' . $logSnippet . '</td>
                 <td class="last-updated">' . htmlspecialchars($update->last_updated) . '</td>
-                <td>' . htmlspecialchars($update->added_by) . '</td>
-                <td>
-                    <a href="?module=ServerUpdateTracker&delete=' . $update->id . '" class="btn btn-danger btn-sm" onclick="return confirm(\'Are you sure you want to delete this entry?\')">Delete</a>
-                </td>
             </tr>';
         }
     }
